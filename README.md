@@ -134,7 +134,7 @@ export default new Storage();
 ```
 We have created a Storage class that wrapped AsyncStorage to keep the keys together and prevent doing JSON parse operations every time.
 
-### Create an authentication context
+### Create an Authentication Context
 We need to share data across our components. We can use this hook throughout our application by creating an authentication context. Passing down the authentication status to each component is redundant. It leads to prop drilling, so using context is a good option. If you are not familiar with Context API in React, check out their docs [here](https://reactjs.org/docs/context.html).
 
 > The React Context API is a state management tool used for sharing data across React components.
@@ -330,8 +330,10 @@ function App() {
 
 export default App;
 ```
+> Deep linking settings should be set up to handling token. [Deep Link](https://reactnative.dev/docs/linking) 
 
 Let’s continue with the views. Create views/ folder inside of the src/ directory to add Home.view.js, SignIn.view.js and SignUp.view.js files inside it.
+
 
 ![Client Keys](./github/6-views.png)
 
@@ -340,7 +342,6 @@ Let’s continue with the views. Create views/ folder inside of the src/ directo
 Open SignUp.view.js and paste the below code.
 
 ```javascript
-// SignUp.js
 import { Link } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
@@ -574,8 +575,12 @@ function HomeView({ navigation }) {
 export default HomeView;
 ```
 
+## Conclusion
+Congratulations!✨
 
+You had completed the most critical part of the Authentication flow, which includes private routes, sign-up, sign-in, and sign-out operations.
 
+## Bonus
 
 
 
