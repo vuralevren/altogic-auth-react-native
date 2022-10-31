@@ -19,7 +19,7 @@ function SignUpView() {
 
   const handleSignUp = async () => {
     try {
-      const { user, errors } = await altogic.auth.signUpWithEmail(
+      const { errors } = await altogic.auth.signUpWithEmail(
         inpEmail,
         inpPassword
       );

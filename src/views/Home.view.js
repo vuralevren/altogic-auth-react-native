@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet, View, Button } from 'react-native';
+import { Text, View, Button } from 'react-native';
 import altogic from '../configs/altogic';
 import { useAuthContext } from '../contexts/Auth.context';
 
@@ -19,13 +19,5 @@ function HomeView({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
-});
 
 export default HomeView;

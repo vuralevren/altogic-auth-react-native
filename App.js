@@ -1,7 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
 import AuthProvider from './src/contexts/Auth.context';
-// Bu iki kütüphaneyi yarn install etmedin ve anlatmadın readme'de
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PrivateRoute from './src/components/PrivateRoute';

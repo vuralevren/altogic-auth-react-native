@@ -32,7 +32,7 @@ function PrivateRoute({ children, route, navigation }) {
   useEffect(() => {
     if (!route.params?.token && !auth && !isAuthLoading) {
       // Navigate to sign in, if the user has not session or don't come from magic link
-      navigation.navigate('SignUp');
+      navigation.navigate('SignIn');
     }
   }, [isAuthLoading, auth]);
 

@@ -48,7 +48,7 @@ Then click Next and select Basic Authentication template. This template is based
 
 Then click Next to confirm and create an app. Also, here we can see some of the details the about the application. Let’s click Create to finish the application creation process.
 
-Awesome! We have created our application; now click/tap on the <strong>newly created app to launch the Designer.</storng>
+Awesome! We have created our application; now click/tap on the <strong>newly created app to launch the Designer.</strong>
 
 > This is the only configuration we need to do in Altogic Designer. Still to access the app and use the Altogic client library, we should get envUrl and clientKey of this app.
 
@@ -212,7 +212,7 @@ function PrivateRoute({ children, route, navigation }) {
   const handleToken = async () => {
     setLoading(true);
     const { user } = await altogic.auth.getAuthGrant(
-      route.params.token
+      route.params?.token
     );
 
     if (user) {
@@ -222,7 +222,7 @@ function PrivateRoute({ children, route, navigation }) {
   };
 
   useEffect(() => {
-    if (route.params.token && !auth) {
+    if (route.params?.token && !auth) {
       // If the user come from magic link, token's handled
       handleToken();
     } else {
@@ -231,7 +231,7 @@ function PrivateRoute({ children, route, navigation }) {
   }, []);
 
   useEffect(() => {
-    if (!route.params.token && !auth && !isAuthLoading) {
+    if (!route.params?.token && !auth && !isAuthLoading) {
       // Navigate to sign in, if the user has not session or don't come from magic link
       navigation.navigate('SignIn');
     }
@@ -257,7 +257,322 @@ export default PrivateRoute;
 
 Now we can wrap necessary routes with the PrivateRoute component to specify access in the App.js. Let’s open it and wrap our Home page with the PrivateRoute as the screen below.
 
+Here also you can copy the code;
 
+```javascript
+import React from 'react';
+import { Text } from 'react-native';
+import AuthProvider from './src/contexts/Auth.context';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import PrivateRoute from './src/components/PrivateRoute';
+import HomeView from './src/views/Home.view';
+import SignInView from './src/views/SignIn.view';
+import SignUpView from './src/views/SignUp.view';
+
+const Stack = createNativeStackNavigator();
+
+const config = {
+  screens: {
+    Home: 'home/:token?',
+    SignIn: 'sign-in',
+    SignUp: 'sign-up'
+  }
+};
+
+const linking = {
+  prefixes: ['myapp://'],
+  config
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <NavigationContainer
+        linking={linking}
+        fallback={<Text>Loading...</Text>}
+      >
+        <Stack.Navigator>
+          <Stack.Screen
+            name="Home"
+            options={{
+              headerLeft: () => null,
+              headerBackVisible: false
+            }}
+          >
+            {(props) => (
+              <PrivateRoute {...props}>
+                <HomeView {...props} />
+              </PrivateRoute>
+            )}
+          </Stack.Screen>
+          <Stack.Screen
+            name="SignUp"
+            component={SignUpView}
+            options={{
+              headerLeft: () => null,
+              headerBackVisible: false
+            }}
+          />
+          <Stack.Screen
+            name="SignIn"
+            component={SignInView}
+            options={{
+              headerLeft: () => null,
+              headerBackVisible: false
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
+  );
+}
+
+export default App;
+```
+
+Let’s continue with the views. Create views/ folder inside of the src/ directory to add Home.view.js, SignIn.view.js and SignUp.view.js files inside it.
+
+![Client Keys](./github/6-views.png)
+
+### Sign Up
+
+Open SignUp.view.js and paste the below code.
+
+```javascript
+// SignUp.js
+import { Link } from '@react-navigation/native';
+import React, { useState } from 'react';
+import {
+  View,
+  Button,
+  TextInput,
+  StyleSheet,
+  Text
+} from 'react-native';
+import altogic from '../configs/altogic';
+
+function SignUpView() {
+  const [inpEmail, setInpEmail] = useState('');
+  const [inpPassword, setInpPassword] = useState('');
+
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState(null);
+
+  const handleSignUp = async () => {
+    try {
+      const { errors } = await altogic.auth.signUpWithEmail(
+        inpEmail,
+        inpPassword
+      );
+
+      if (errors) {
+        throw errors;
+      }
+
+      setSuccess(`We sent a verification link to ${inpEmail}`);
+    } catch (err) {
+      setError(err);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        autoCapitalize="none"
+        placeholderTextColor="white"
+        onChangeText={(val) => setInpEmail(val)}
+        value={inpEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        secureTextEntry={true}
+        autoCapitalize="none"
+        placeholderTextColor="white"
+        onChangeText={(val) => setInpPassword(val)}
+        value={inpPassword}
+      />
+      <Button title="Sign Up" onPress={handleSignUp} />
+      <Text style={styles.alreadyLabel}>
+        Already have an account?
+        <Link style={styles.linkLabel} to="/sign-in">
+          Login
+        </Link>
+      </Text>
+      <Text style={styles.successLabel}>{success && success}</Text>
+      <Text>{error && JSON.stringify(error, null, 3)}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  input: {
+    width: 350,
+    height: 55,
+    backgroundColor: '#42A5F5',
+    margin: 10,
+    padding: 8,
+    color: 'white',
+    borderRadius: 14,
+    fontSize: 18,
+    fontWeight: '500'
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  successLabel: {
+    color: 'green'
+  },
+  alreadyLabel: {
+    marginTop: 20
+  },
+  linkLabel: {
+    color: 'blue'
+  }
+});
+
+export default SignUpView;
+```
+
+### Sign In
+
+Open SignIn.view.js and paste the below code.
+
+```javascript
+import { Link } from '@react-navigation/native';
+import React, { useState } from 'react';
+import {
+  View,
+  Button,
+  TextInput,
+  StyleSheet,
+  Text
+} from 'react-native';
+import altogic from '../configs/altogic';
+import { useAuthContext } from '../contexts/Auth.context';
+
+function SignInView({ navigation }) {
+  const [auth, setAuth] = useAuthContext();
+
+  const [inpEmail, setInpEmail] = useState('');
+  const [inpPassword, setInpPassword] = useState('');
+
+  const [error, setError] = useState(null);
+
+  const handleSignIn = async () => {
+    try {
+      const { user, errors } = await altogic.auth.signInWithEmail(
+        inpEmail,
+        inpPassword
+      );
+
+      if (errors) {
+        throw errors;
+      }
+
+      setAuth(user);
+      navigation.navigate('Home');
+    } catch (err) {
+      setError(err);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        autoCapitalize="none"
+        placeholderTextColor="white"
+        onChangeText={(val) => setInpEmail(val)}
+        value={inpEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        secureTextEntry={true}
+        autoCapitalize="none"
+        placeholderTextColor="white"
+        onChangeText={(val) => setInpPassword(val)}
+        value={inpPassword}
+      />
+      <Button title="Login" onPress={handleSignIn} />
+      <Text style={styles.alreadyLabel}>
+        Don't have an account yet?
+      </Text>
+      <Link style={styles.linkLabel} to="/sign-up">
+        Create an account
+      </Link>
+      <Text>{error && JSON.stringify(error, null, 3)}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  input: {
+    width: 350,
+    height: 55,
+    backgroundColor: '#42A5F5',
+    margin: 10,
+    padding: 8,
+    color: 'white',
+    borderRadius: 14,
+    fontSize: 18,
+    fontWeight: '500'
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  successLabel: {
+    color: 'green'
+  },
+  alreadyLabel: {
+    marginTop: 20
+  },
+  linkLabel: {
+    color: 'blue'
+  }
+});
+
+export default SignInView;
+```
+
+### Home
+
+Open Home.view.js and paste the below code.
+
+```javascript
+import React from 'react';
+import { Text, View, Button } from 'react-native';
+import altogic from '../configs/altogic';
+import { useAuthContext } from '../contexts/Auth.context';
+
+function HomeView({ navigation }) {
+  const [auth, setAuth] = useAuthContext();
+
+  const handleSignOut = async () => {
+    await altogic.auth.signOut();
+    setAuth(null);
+    navigation.navigate('SignIn');
+  };
+
+  return (
+    <View>
+      <Text>{auth && JSON.stringify(auth, null, 3)}</Text>
+      <Button title="Sign Out" onPress={handleSignOut} />
+    </View>
+  );
+}
+
+export default HomeView;
+```
 
 
 
