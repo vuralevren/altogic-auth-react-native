@@ -595,6 +595,45 @@ function HomeView({ navigation }) {
 
 export default HomeView;
 ```
+## Magic Link Authentication
+Firstly, We will create a react web project in local to the redirected url. This url takes access_token, status and action as parameters. We will handle it in this project.
+
+```cli
+npx create-react-app my-app
+```
+
+Open App.js and paste the below code.
+```javascript
+import './App.css';
+import { useSearchParams, useNavigate } from "react-router-dom";
+
+function App({props}) {
+  const [params] = useSearchParams();
+  const token = params.get("access_token")
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>Email is confirmed.</h1>
+        <a href={`myapp://home?token=${token}`} _blank>
+          Back to app
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
+We have given the deep link with token. Let's change the redirect url in altogic.
+
+![Magic Link](./github/10-magic-link.png)
+
+We made it.✨
+
+![Magic Link](./github/video.gif)
+
 ## Bonus
 ### Uplodading changing and removing profile picture
 
