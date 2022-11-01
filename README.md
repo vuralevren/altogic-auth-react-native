@@ -632,7 +632,7 @@ We have given the deep link with token. Let's change the redirect url in altogic
 
 We made it.✨
 
-![Magic Link](./github/video.gif)
+<img src="./github/video.gif" alt="drawing" width="500"/>
 
 ## Bonus
 ### Uplodading changing and removing profile picture
