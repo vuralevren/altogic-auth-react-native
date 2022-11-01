@@ -4,7 +4,7 @@
 ## Introduction
 Altogic is a Backend as a Service (BaaS) platform and provides a variety of services in modern web and mobile development. Most of the modern applications using React or other libraries/frameworks require to know the identity of a user. And this necessity allows an app to securely save user data and session in the cloud and provide more personalized functionalities and views to users.
 
-Altogic has an Authentication service that integrates and implements well in JAMstack apps. It has a ready-to-use Javascript client library, and it supports many authentication providers such as email/password, phone number, magic link, and providers like Google, Facebook, Twitter, Github, etc.,
+Altogic has an Authentication service that integrates and implements well in JAMstack apps. It has a ready-to-use Javascript client library, and it supports many authentication providers such as email/password, phone number, magic link, and OAuth providers like Google, Facebook, Twitter, Github, etc.,
 
 In this tutorial, we will implement email/password authentication with React Native and take a look how as a React Native developer we build applications and integrate with Altogic Authentication.
 
@@ -13,7 +13,10 @@ After completion of this tutorial, you will learn:
 - How to create sample screens to display forms like login and signup.
 - How to create a home screen and authorize only logged in users.
 - How to create different routes using the react-navigation.
-- How to create an authentication flow by conditionally rendering between these pages whether a user is logged-in or not.
+- How to create an authentication flow by conditionally rendering between these pages whether a user is logged-in or not. 
+- How to authenticate users using magic link
+- How to update user profile info and upload a profile picture
+- How to manage active sessions of a user
 - And we will integrate Altogic authentication with the email/password method.
 
 If you are new to React Native applications, this tutorial is definitely for you to understand the basics and even advanced concepts.
@@ -24,10 +27,26 @@ To complete this tutorial, make sure you have installed following tools and util
 - [VsCode](https://code.visualstudio.com/download)
 - [NodeJS](https://nodejs.org/en/download/)
 - [React Native Enviroments](https://reactnative.dev/docs/environment-setup)
-- [Altogic Account](https://designer.altogic.com/)
+- You also need an [Altogic Account](https://designer.altogic.com/). If you have not one yet, you can create an account by signin up to Altogic.
+
+## How email based sign-up works in Altogic
+Here are Login and Signup components to collect information from the user.
+
+![Authentication Flow](./github/7-authentication-flow.png)
+
+Once the user created successfully, our react app will route the user to the Verification page, and a verification email will be sent to the user’s email address. When the user clicks the link in the mail, the user will navigate to the redirect page to grant authentication rights. After successfully creating a session on the Redirect page, users will be redirected to the Home page.
+
+## Customize Email Verification
+You can disable the email verification,
+
+![Authentication Settings](./github/8-auth-settings.png)
+
+or you can customize the template.
+
+![Email Template](./github/9-mail-template.png)
   
 ## Creating an Altogic App
-We will use Altogic as a backend service platform, so let’s visit [Altogic Designer](https://designer.altogic.com/) and create an account.
+We will use Altogic as a backend service platform, so let’s visit [Altogic Designer](https://designer.altogic.com/).
 
 After creating an account, you will see the workspace where you can access your apps.
 
@@ -42,15 +61,17 @@ Click + New app and follow the instructions;
    
 ![Create App](./github/2-create-app.png)
 
+Then click Next and select Basic Authentication template. This template is creates a default user model for your app which is required by [Altogic Client Library](https://github.com/altogic/altogic-js) to store user data and manage authentication.
+
 Then click Next and select Basic Authentication template. This template is based on session authentication and highly recommended to secure your apps.
 
 ![Choose Template](./github/3-choose-template.png)
 
-Then click Next to confirm and create an app. Also, here we can see some of the details the about the application. Let’s click Create to finish the application creation process.
+Then click Next to confirm and create an app.
 
 Awesome! We have created our application; now click/tap on the <strong>newly created app to launch the Designer.</strong>
 
-> This is the only configuration we need to do in Altogic Designer. Still to access the app and use the Altogic client library, we should get envUrl and clientKey of this app.
+> This is the only configuration we need to do in Altogic Designer. In order to access the app and use the Altogic client library, we should get envUrl and clientKey of this app.
 
 Click the <strong>Home</strong> icon at the left sidebar to copy the envUrl and clientKey.
 
@@ -132,7 +153,7 @@ class Storage {
 
 export default new Storage();
 ```
-We have created a Storage class that wrapped AsyncStorage to keep the keys together and prevent doing JSON parse operations every time.
+We have created a Storage class that wrapped AsyncStorage to keep the keys together and prevent JSON parse operations every time.
 
 ### Create an Authentication Context
 We need to share data across our components. We can use this hook throughout our application by creating an authentication context. Passing down the authentication status to each component is redundant. It leads to prop drilling, so using context is a good option. If you are not familiar with Context API in React, check out their docs [here](https://reactjs.org/docs/context.html).
@@ -574,13 +595,179 @@ function HomeView({ navigation }) {
 
 export default HomeView;
 ```
+## Bonus
+### Uplodading changing and removing profile picture
+
+> You will need a file picker that works on the environment you will build the project for, we will use [react-native-image-picker]('https://github.com/react-native-image-picker/react-native-image-picker') in this example.
+
+Open Home.view.js again and paste the below code to create or remove an avatar for the user.
+
+```javascript
+import React, { useState } from 'react';
+import {
+  Text,
+  View,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator
+} from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import altogic from '../configs/altogic';
+import { useAuthContext } from '../contexts/Auth.context';
+
+function HomeView({ navigation }) {
+  const [auth, setAuth] = useAuthContext();
+
+  const [loading, setLoading] = useState(false);
+
+  const handleSignOut = async () => {
+    await altogic.auth.signOut();
+    setAuth(null);
+    navigation.navigate('SignIn');
+  };
+
+  // Bonus
+  const handleUploadPhoto = async () => {
+    try {
+      let asset = null;
+      const res = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 1,
+        includeBase64: true
+      });
+      if (!res.didCancel && res.errorCode !== 'permission') {
+        asset = res.assets[0];
+      }
+      if (!asset) {
+        throw new Error('No valid file');
+      }
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        type: asset.type,
+        name: asset.fileName
+      });
+
+      setLoading(true);
+
+      const { publicPath } = await uploadPhoto(formData, auth.email);
+      await updateUserInfo({ profilePicture: publicPath });
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const uploadPhoto = async (file, filename) => {
+    const { data, errors } = await altogic.storage
+      .bucket('root')
+      .upload(filename, file);
+
+    if (errors) {
+      throw errors;
+    }
+    return data;
+  };
+
+  const handleRemovePhoto = async () => {
+    setLoading(true);
+    await altogic.storage.bucket('root').deleteFiles([auth.email]);
+    await updateUserInfo({ profilePicture: null });
+    setLoading(false);
+  };
+
+  const updateUserInfo = async (data) => {
+    const { data: userFromDB, errors } = await altogic.db
+      .model('users')
+      .object(auth._id)
+      .update(data);
+
+    if (errors) {
+      throw errors;
+    }
+    setAuth(userFromDB);
+  };
+
+  return (
+    <View>
+      <Text>{auth && JSON.stringify(auth, null, 3)}</Text>
+      <Button title="Sign Out" onPress={handleSignOut} />
+      <View style={styles.container}>
+        {loading ? (
+          <ActivityIndicator />
+        ) : (
+          <Image
+            style={styles.tinyLogo}
+            source={{
+              uri:
+                auth.profilePicture ||
+                `https://ui-avatars.com/api/?name=${auth.email}&background=0D8ABC&color=fff`
+            }}
+          />
+        )}
+      </View>
+      <TouchableOpacity
+        style={styles.buttonStyle}
+        activeOpacity={0.5}
+        onPress={handleUploadPhoto}
+      >
+        <Text style={styles.buttonTextStyle}>Upload Photo</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.buttonStyle}
+        activeOpacity={0.5}
+        onPress={handleRemovePhoto}
+      >
+        <Text style={styles.buttonTextStyle}>Remove Photo</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+    marginBottom: 100
+  },
+  buttonStyle: {
+    backgroundColor: '#307ecc',
+    borderWidth: 0,
+    color: '#FFFFFF',
+    borderColor: '#307ecc',
+    height: 40,
+    alignItems: 'center',
+    borderRadius: 30,
+    marginLeft: 35,
+    marginRight: 35,
+    marginTop: 15
+  },
+  buttonTextStyle: {
+    color: '#FFFFFF',
+    paddingVertical: 10,
+    fontSize: 16
+  },
+  tinyLogo: {
+    width: 150,
+    height: 150
+  }
+});
+
+export default HomeView;
+```
 
 ## Conclusion
 Congratulations!✨
 
 You had completed the most critical part of the Authentication flow, which includes private routes, sign-up, sign-in, and sign-out operations.
 
-## Bonus
+> If you have any questions about Altogic or want to share what you have built, please post a message in our [Community Forum](https://community.altogic.com/) or [Discord Channel](https://discord.gg/ERK2ssumh8).
+
 
 
 

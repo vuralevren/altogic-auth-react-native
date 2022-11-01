@@ -5,7 +5,8 @@ import {
   Button,
   StyleSheet,
   TouchableOpacity,
-  Platform
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import altogic from '../configs/altogic';
@@ -23,24 +24,31 @@ function HomeView({ navigation }) {
   };
 
   // Bonus
-
-  const onChangeHandler = async () => {
+  const handleUploadPhoto = async () => {
     try {
-      let file = null;
+      let asset = null;
       const res = await launchImageLibrary({
         mediaType: 'photo',
         quality: 1,
         includeBase64: true
       });
       if (!res.didCancel && res.errorCode !== 'permission') {
-        // file = res.assets[0].base64;
-        file = res;
+        asset = res.assets[0];
       }
-      if (!file) {
+      if (!asset) {
         throw new Error('No valid file');
       }
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        type: asset.type,
+        name: asset.fileName
+      });
+
       setLoading(true);
-      const { publicPath } = await uploadPhoto(file);
+
+      const { publicPath } = await uploadPhoto(formData, auth.email);
       await updateUserInfo({ profilePicture: publicPath });
       setLoading(false);
     } catch (error) {
@@ -48,15 +56,22 @@ function HomeView({ navigation }) {
     }
   };
 
-  const uploadPhoto = async (file) => {
+  const uploadPhoto = async (file, filename) => {
     const { data, errors } = await altogic.storage
       .bucket('root')
-      .upload(auth.email, file);
+      .upload(filename, file);
 
     if (errors) {
       throw errors;
     }
     return data;
+  };
+
+  const handleRemovePhoto = async () => {
+    setLoading(true);
+    await altogic.storage.bucket('root').deleteFiles([auth.email]);
+    await updateUserInfo({ profilePicture: null });
+    setLoading(false);
   };
 
   const updateUserInfo = async (data) => {
@@ -75,59 +90,45 @@ function HomeView({ navigation }) {
     <View>
       <Text>{auth && JSON.stringify(auth, null, 3)}</Text>
       <Button title="Sign Out" onPress={handleSignOut} />
-      <View style={styles.mainBody}>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 30, textAlign: 'center' }}>
-            React Native File Upload Example
-          </Text>
-          <Text
-            style={{
-              fontSize: 25,
-              marginTop: 20,
-              marginBottom: 30,
-              textAlign: 'center'
+      <View style={styles.container}>
+        {loading ? (
+          <ActivityIndicator />
+        ) : (
+          <Image
+            style={styles.tinyLogo}
+            source={{
+              uri:
+                auth.profilePicture ||
+                `https://ui-avatars.com/api/?name=${auth.email}&background=0D8ABC&color=fff`
             }}
-          >
-            www.aboutreact.com
-          </Text>
-        </View>
-        {/* Showing the data of selected Single file
-        {singleFile != null ? (
-          <Text style={styles.textStyle}>
-            File Name: {singleFile.name ? singleFile.name : ''}
-            {'\n'}
-            Type: {singleFile.type ? singleFile.type : ''}
-            {'\n'}
-            File Size: {singleFile.size ? singleFile.size : ''}
-            {'\n'}
-            URI: {singleFile.uri ? singleFile.uri : ''}
-            {'\n'}
-          </Text>
-        ) : null} */}
-        <TouchableOpacity
-          style={styles.buttonStyle}
-          activeOpacity={0.5}
-          onPress={onChangeHandler}
-        >
-          <Text style={styles.buttonTextStyle}>Select File</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.buttonStyle}
-          activeOpacity={0.5}
-          onPress={onChangeHandler}
-        >
-          <Text style={styles.buttonTextStyle}>Upload File</Text>
-        </TouchableOpacity>
+          />
+        )}
       </View>
+      <TouchableOpacity
+        style={styles.buttonStyle}
+        activeOpacity={0.5}
+        onPress={handleUploadPhoto}
+      >
+        <Text style={styles.buttonTextStyle}>Upload Photo</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.buttonStyle}
+        activeOpacity={0.5}
+        onPress={handleRemovePhoto}
+      >
+        <Text style={styles.buttonTextStyle}>Remove Photo</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  mainBody: {
+  container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20
+    alignItems: 'center',
+    marginTop: 100,
+    marginBottom: 100
   },
   buttonStyle: {
     backgroundColor: '#307ecc',
@@ -146,13 +147,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16
   },
-  textStyle: {
-    backgroundColor: '#fff',
-    fontSize: 15,
-    marginTop: 16,
-    marginLeft: 35,
-    marginRight: 35,
-    textAlign: 'center'
+  tinyLogo: {
+    width: 150,
+    height: 150
   }
 });
 
