@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class Storage {
   constructor() {
     this.KEY_AUTH = '@auth';
+    this.KEY_SESSION = '@session';
   }
 
   set = async (key, value) => {

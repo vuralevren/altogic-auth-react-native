@@ -1,16 +1,14 @@
 // SignUp.js
 import { Link } from '@react-navigation/native';
-import React, { useState } from 'react';
-import {
-  View,
-  Button,
-  TextInput,
-  StyleSheet,
-  Text
-} from 'react-native';
+import { useState } from 'react';
+import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import altogic from '../configs/altogic';
+import { useAuthContext } from '../contexts/Auth.context';
 
-function SignUpView() {
+function SignUpView({ navigation }) {
+  const { setAuth, setSession } = useAuthContext();
+
+  const [inpName, setInpName] = useState('');
   const [inpEmail, setInpEmail] = useState('');
   const [inpPassword, setInpPassword] = useState('');
 
@@ -19,16 +17,24 @@ function SignUpView() {
 
   const handleSignUp = async () => {
     try {
-      const { errors } = await altogic.auth.signUpWithEmail(
+      const { user, session, errors } = await altogic.auth.signUpWithEmail(
         inpEmail,
-        inpPassword
+        inpPassword,
+        inpName
       );
 
       if (errors) {
         throw errors;
       }
 
-      setSuccess(`We sent a verification link to ${inpEmail}`);
+      if (session) {
+        setAuth(user);
+        setSession(session);
+        navigation.navigate('Profile');
+      } else {
+        setSuccess(`We sent a verification link to ${inpEmail}`);
+        setError(null);
+      }
     } catch (err) {
       setError(err);
     }
@@ -36,6 +42,14 @@ function SignUpView() {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Name"
+        autoCapitalize="none"
+        placeholderTextColor="white"
+        onChangeText={(val) => setInpName(val)}
+        value={inpName}
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"

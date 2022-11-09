@@ -1,41 +1,31 @@
-// SignUp.js
 import { Link } from '@react-navigation/native';
-import React, { useState } from 'react';
-import {
-  View,
-  Button,
-  TextInput,
-  StyleSheet,
-  Text
-} from 'react-native';
+import { useState } from 'react';
+import { View, StyleSheet, TextInput, Button, Text } from 'react-native';
 import altogic from '../configs/altogic';
-import { useAuthContext } from '../contexts/Auth.context';
 
-function SignInView({ navigation }) {
-  const [auth, setAuth] = useAuthContext();
-
+function MagicLinkView() {
   const [inpEmail, setInpEmail] = useState('');
-  const [inpPassword, setInpPassword] = useState('');
 
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = async () => {
+  async function loginHandler() {
     try {
-      const { user, errors } = await altogic.auth.signInWithEmail(
-        inpEmail,
-        inpPassword
-      );
+      setLoading(true);
+      setError(null);
 
-      if (errors) {
-        throw errors;
-      }
+      const { errors: apiErrors } = await altogic.auth.sendMagicLinkEmail(inpEmail);
+      setLoading(false);
 
-      setAuth(user);
-      navigation.navigate('Home');
-    } catch (err) {
-      setError(err);
+      if (apiErrors) throw apiErrors;
+
+      setInpEmail('');
+      setSuccess('Email sent! Check your inbox.');
+    } catch (error) {
+      setError(error.items);
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -47,22 +37,12 @@ function SignInView({ navigation }) {
         onChangeText={(val) => setInpEmail(val)}
         value={inpEmail}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry={true}
-        autoCapitalize="none"
-        placeholderTextColor="white"
-        onChangeText={(val) => setInpPassword(val)}
-        value={inpPassword}
-      />
-      <Button title="Login" onPress={handleSignIn} />
-      <Text style={styles.alreadyLabel}>
-        Don't have an account yet?
-      </Text>
+      <Button title="Send Magic Link" disabled={loading} onPress={loginHandler} />
+      <Text style={styles.alreadyLabel}>Don't have an account yet?</Text>
       <Link style={styles.linkLabel} to="/sign-up">
         Create an account
       </Link>
+      <Text style={styles.successLabel}>{success && success}</Text>
       <Text>{error && JSON.stringify(error, null, 3)}</Text>
     </View>
   );
@@ -96,4 +76,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default SignInView;
+export default MagicLinkView;

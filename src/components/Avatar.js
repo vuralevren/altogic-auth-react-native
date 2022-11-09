@@ -1,29 +1,14 @@
-import React, { useState } from 'react';
-import {
-  Text,
-  View,
-  Button,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator
-} from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import altogic from '../configs/altogic';
 import { useAuthContext } from '../contexts/Auth.context';
 
-function HomeView({ navigation }) {
-  const [auth, setAuth] = useAuthContext();
+function Avatar() {
+  const { auth, setAuth } = useAuthContext();
 
   const [loading, setLoading] = useState(false);
 
-  const handleSignOut = async () => {
-    await altogic.auth.signOut();
-    setAuth(null);
-    navigation.navigate('SignIn');
-  };
-
-  // Bonus
   const handleUploadPhoto = async () => {
     try {
       let asset = null;
@@ -57,21 +42,12 @@ function HomeView({ navigation }) {
   };
 
   const uploadPhoto = async (file, filename) => {
-    const { data, errors } = await altogic.storage
-      .bucket('root')
-      .upload(filename, file);
+    const { data, errors } = await altogic.storage.bucket('root').upload(filename, file);
 
     if (errors) {
       throw errors;
     }
     return data;
-  };
-
-  const handleRemovePhoto = async () => {
-    setLoading(true);
-    await altogic.storage.bucket('root').deleteFiles([auth.email]);
-    await updateUserInfo({ profilePicture: null });
-    setLoading(false);
   };
 
   const updateUserInfo = async (data) => {
@@ -88,8 +64,6 @@ function HomeView({ navigation }) {
 
   return (
     <View>
-      <Text>{auth && JSON.stringify(auth, null, 3)}</Text>
-      <Button title="Sign Out" onPress={handleSignOut} />
       <View style={styles.container}>
         {loading ? (
           <ActivityIndicator />
@@ -104,19 +78,8 @@ function HomeView({ navigation }) {
           />
         )}
       </View>
-      <TouchableOpacity
-        style={styles.buttonStyle}
-        activeOpacity={0.5}
-        onPress={handleUploadPhoto}
-      >
-        <Text style={styles.buttonTextStyle}>Upload Photo</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.buttonStyle}
-        activeOpacity={0.5}
-        onPress={handleRemovePhoto}
-      >
-        <Text style={styles.buttonTextStyle}>Remove Photo</Text>
+      <TouchableOpacity style={styles.buttonStyle} activeOpacity={0.5} onPress={handleUploadPhoto}>
+        <Text style={styles.buttonTextStyle}>Change Avatar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -127,8 +90,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 100,
-    marginBottom: 100
+    padding: 20
   },
   buttonStyle: {
     backgroundColor: '#307ecc',
@@ -140,7 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginLeft: 35,
     marginRight: 35,
-    marginTop: 15
+    marginTop: 5
   },
   buttonTextStyle: {
     color: '#FFFFFF',
@@ -153,4 +115,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default HomeView;
+export default Avatar;
