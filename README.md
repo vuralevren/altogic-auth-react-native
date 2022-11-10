@@ -990,7 +990,7 @@ Let's create a Avatar component for user can upload a profile photo.
 
 > You will need a file picker that works on the environment you build the project for, we will use [react-native-image-picker]('https://github.com/react-native-image-picker/react-native-image-picker') in this example.
 
-Open Avatar.js and paste the below code to create an avatar for the user. For convenience, we will be using the user's name as the name of the uploaded file and upload the profile picture to the root directory of our app storage. If needed you can create different buckets for each user or a generic bucket to store all provile photos of users. The Altogic Client Library has all the methods to manage buckets and files.
+Open Avatar.js and paste the below code to create an avatar for the user. For convenience, we will be using the user's name as the name of the uploaded file and upload the profile picture to the root directory of our app storage. If needed you can create different buckets for each user or a generic bucket to store all provide photos of users. The Altogic Client Library has all the methods to manage buckets and files.
 
 ```javascript
 // src/components/Avatar.js
