@@ -20,6 +20,13 @@ After completion of this tutorial, you will learn:
 
 If you are new to React Native applications, this tutorial is definitely for you to understand the basics and even advanced concepts.
 
+## How email-based sign-up works in Altogic
+By default, when you create an app in Altogic, email-based authentication is enabled. In addition, during email-based authentication, the email address of the user is also verified. Below you can find the flow of email and password-based sign-up process.
+
+![Authentication Flow](./github/13-auth-flow.png)
+
+If email verification is disabled, then after step 2, Altogic immediately returns a new session to the user, meaning that steps after step #2 in the above flow are not executed. You can easily configure email-based authentication settings from the App Settings > Authentication in Altogic Designer. One critical parameter you need to specify is the Redirect URL, you can also customize this parameter from App Settings > Authentication. Finally, you can also customize the email message template from the App Settings > Authentication > Message Templates.
+
 ## Prerequisites
 To complete this tutorial, make sure you have installed the following tools and utilities on your local development environment.
 
@@ -27,13 +34,6 @@ To complete this tutorial, make sure you have installed the following tools and 
 - [NodeJS](https://nodejs.org/en/download/)
 - [React Native Enviroments](https://reactnative.dev/docs/environment-setup)
 - You also need an Altogic Account. If you do not have one, you can create an account by [signin up for Altogic](https://designer.altogic.com/).
-
-## How email-based sign-up works in Altogic
-By default, when you create an app in Altogic, email-based authentication is enabled. In addition, during email-based authentication, the email address of the user is also verified. Below you can find the flow of email and password-based sign-up process.
-
-![Authentication Flow](./github/13-auth-flow.png)
-
-If email verification is disabled, then after step 2, Altogic immediately returns a new session to the user, meaning that steps after step #2 in the above flow are not executed. You can easily configure email-based authentication settings from the App Settings > Authentication in Altogic Designer. One critical parameter you need to specify is the Redirect URL, you can also customize this parameter from App Settings > Authentication. Finally, you can also customize the email message template from the App Settings > Authentication > Message Templates.
 
 ## Creating an Altogic App
 After creating an account, you will see the workspace where you can access your apps.
@@ -64,12 +64,13 @@ Click the <strong>Home</strong> icon at the left sidebar to copy the `envUrl` an
 
 ![Client Keys](./github/4-client-keys.png)
 
-## Confirm Email
+Once the user is created successfully, our React app will route the user to the Verification page, and a verification email will be sent to the user's email address. When the user clicks the link in the mail, the user will navigate to the redirect page to grant authentication rights. After successfully creating a session on the Redirect page, users will be redirected to the Home page.
 
-Once the user created successfully, our React app will route the user to the Verification page, and a verification email will be sent to the user’s email address. When the user clicks the link in the mail, the user will navigate to the redirect page to grant authentication rights. After successfully creating a session on the Redirect page, users will be redirected to the Home page.
-
-### Quick Tip
 > If you want, you can deactivate or customize the mail verification from **App Settings -> Authentication** in Logic Designer.
+
+![Mail](github/15-mail.png)
+
+We have changed the redirect URL to `myapp://auth-redirect`
 
 ## Create a React Native project
 ```bash
@@ -77,7 +78,7 @@ npx react-native init AwesomeProject
 ```
 
 ## Integrating with Altogic
-Our backend and frontend is now ready and running on the server. ✨
+Our backend and frontend are now ready and running on the server. ✨
 
 Now, we can install the Altogic client library to our React app to connect our frontend with the backend.
 
@@ -88,11 +89,11 @@ npm install altogic
 yarn add altogic
 ```
 
-Let’s create a configs/ folder inside of the src/ directory to add altogic.js file.
+Let’s create a configs/ folder inside of the src/ directory to add `altogic.js` file.
 
-Open altogic.js and paste below code block to export the altogic client instance.
+Open `altogic.js` and paste below code block to export the altogic client instance.
 
-/src/configs/altogic.js
+`/src/configs/altogic.js`
 
 ```javascript
 // /src/configs/altogic.js
@@ -109,7 +110,7 @@ export default { altogic };
 
 > Replace envUrl and clientKey which is shown in the <strong>Home</strong> view of [Altogic Designer](https://designer.altogic.com/).
 
-### Storing Session
+## Storing Session
 Now, we can install the [react-native-async-storage](https://react-native-async-storage.github.io/async-storage/docs/install/) library to keep session information in app's storage.
 
 ```sh
@@ -125,9 +126,9 @@ On iOS, use CocoaPods to add the native RNAsyncStorage to your project:
 npx pod-install
 ```
 
-Let's create a storage.js inside of the configs/ directory.
+Let's create a `storage.js` inside of the configs/ directory.
 
-Open storage.js and paste below code block.
+Open `storage.js` and paste below code block.
 ```javascript
 // src/configs/storage.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -157,14 +158,14 @@ export default new Storage();
 ```
 We have created a Storage class that wrapped AsyncStorage to keep the keys together and prevent JSON parse operations every time.
 
-### Create an Authentication Context
+## Create an Authentication Context
 We need to share data across our components. We can use this hook throughout our application by creating an authentication context. Passing down the authentication status to each component is redundant. It leads to prop drilling, so using context is a good option. If you are not familiar with Context API in React, check out their docs [here](https://reactjs.org/docs/context.html).
 
 > The React Context API is a state management tool used for sharing data across React components.
 
-Let’s create contexts/ folder inside of the src/ directory to add Auth.context.js file inside it.
+Let’s create contexts/ folder inside of the src/ directory to add `Auth.context.js` file inside it.
 
-Open Auth.context.js and copy following code.
+Open `Auth.context.js` and copy following code.
 
 ```javascript
 // /src/contexts/Auth.context.js
@@ -248,7 +249,7 @@ export default Provider;
 
 ### Private Route Component
 
-To secure the application and authorize users to access specified routes let’s create components/ folder inside of the src/ directory to add PrivateRoute.js and paste the code below.
+To secure the application and authorize users to access specified routes let’s create components/ folder inside of the src/ directory to add `PrivateRoute.js` and paste the code below.
 
 ```javascript
 import React, { useEffect } from 'react';
@@ -283,7 +284,7 @@ export default PrivateRoute;
 
 > Previously we have created our authentication context to use user information. And, here, we are controlling session to route users, whether the Login page or the children.
 
-Now we can wrap necessary routes with the PrivateRoute component to specify access in the App.js. Let’s open it and wrap our Home page with the PrivateRoute as the screen below.
+Now we can wrap necessary routes with the PrivateRoute component to specify access in the `App.js`. Let’s open it and wrap our Home page with the PrivateRoute as the screen below.
 
 > Firstly, you need to install [React Navigation](https://reactnavigation.org/). It's a routing library for react native applications.
 
@@ -376,9 +377,9 @@ Let's create some views in **src/views/** folder as below:
 * profile.js
 
 ### Index Page
-In this page, we will show Login, Login With Magic Link and Register buttons.
+On this page, we will show the Login, Login With Magic Link, and Register buttons.
 
-Replacing views/index.js with the following code:
+Replacing `views/index.js` with the following code:
 
 ```javascript
 // src/views/index.js
@@ -418,10 +419,9 @@ export default IndexView;
 ```
 
 ### Login Page
-In this page, we will show a form to log in with email and password. We will use Altogic's altogic.auth.signInWithEmail() function to log in. We will save session and user infos to state and storage if signInWithEmail function return success. Then user will be redirected to profile page.
+On this page, we will show a form to log in with your email and password. We will use Altogic's `altogic.auth.signInWithEmail()` function to log in. We will save the session and user info to state and storage if the `signInWithEmail` function return success. The user will be redirected to the profile page.
 
-Replacing views/sign-in.js with the following code:
-
+Replacing `views/sign-in.js` with the following code:
 ```javascript
 // src/views/sign-in.js
 import { Link } from '@react-navigation/native';
@@ -514,15 +514,14 @@ const styles = StyleSheet.create({
 export default SignInView;
 ```
 
-### Register
-In this page, we will show a form to sign up with email and password. We will use Altogic's altogic.auth.signUpWithEmail() function to log in. 
+### Register Page
+On this page, we will show a form to sign up with email and password. We will use Altogic's `altogic.auth.signUpWithEmail()` function to log in.
 
-We will save session and user infos to state and storage if signUpWithEmail function return user. Then user will be redirected to profile page.
+We will save the session and user info to state and storage if the `signUpWithEmail` function returns the user. The user will be redirected to the profile page.
 
-If signUpWithEmail does not return user, it means user need to confirm email so we will show the success message. 
+If `signUpWithEmail` does not return the user, it means the user must confirm the email so we will show the success message.
 
-Replacing views/sign-up.js with the following code:
-
+Replacing `views/sign-up.js` with the following code:
 ```javascript
 // src/views/sign-up.js
 import { Link } from '@react-navigation/native';
@@ -639,11 +638,11 @@ export default SignUpView;
 ```
 
 ### Profile Page
-In this page, we will show the user's profile and We will use Altogic's altogic.auth.signOut() function to log out. 
+On this page, we will show the user's profile and use Altogic's `altogic.auth.signOut()` function to log out.
 
-We will remove session and user infos from state and storage if signOut function return success. Then user will be redirected to login page.
+We will remove session and user info from state and storage if the `signOut` function return success. Then the user will be redirected to the login page.
 
-Replacing views/profile.js with the following code:
+Replacing `views/profile.js` with the following code:
 ```js
 // src/views/profile.js
 import { Button, ScrollView } from 'react-native';
@@ -676,12 +675,11 @@ function ProfileView({ navigation }) {
 export default ProfileView;
 ```
 ### Auth Redirect Page
-We use this page for verify the user's email address and **Login With Magic Link Authentication.**
+We use this page to verify the user's email address and **Login With Magic Link Authentication.**
 
-We will use Altogic's altogic.auth.getAuthGrant() function to log in with handled token from url. 
+We will use Altogic's `altogic.auth.getAuthGrant()` function to log in with the handled token from the URL.
 
-Replacing views/auth-redirect.js with the following code:
-
+Replacing `views/auth-redirect.js` with the following code:
 ```js
 // src/views/auth-redirect.js
 import { useEffect } from 'react';
@@ -721,13 +719,10 @@ function AuthRedirectView({ route, navigation }) {
 export default AuthRedirectView;
 ```
 
-### Login With Magic Link Page
-In this page, we will show a form to log in with Magic Link with only email. We will use Altogic's altogic.auth.sendMagicLinkEmail() function to log in.
+### Magic Link Page
+On this page, we will show a form to log in with Magic Link with only email. We will use Altogic's `altogic.auth.sendMagicLinkEmail()` function to log in.
 
-### How login With Magic Link Works
-
-If there is a user matching the entered email address, this function sends a link to that user by mail. and if the link in the e-mail is clicked, the user is logged in.
-
+If a user matches the entered email address, this function sends a link to that user by mail. And if the link in the e-mail is clicked, the user is logged in.
 ```js
 // src/views/magic-link.js
 import { Link } from '@react-navigation/native';
@@ -819,7 +814,7 @@ Let's create some components in **src/components/** folder as below:
 * UserInfo.js
 * Sessions.js
 
-Replacing components/UserInfo.js with the following code:
+Replacing `components/UserInfo.js` with the following code:
 ```js
 // src/components/UserInfo.js
 import { useState } from 'react';
@@ -896,7 +891,7 @@ const styles = StyleSheet.create({
 export default UserInfo;
 ```
 
-Replacing components/Sessions.js with the following code:
+Replacing `components/Sessions.js` with the following code:
 ```js
 // src/components/Sessions.js
 import { useEffect, useState } from 'react';
@@ -990,7 +985,7 @@ Let's create a Avatar component for user can upload a profile photo.
 
 > You will need a file picker that works on the environment you build the project for, we will use [react-native-image-picker]('https://github.com/react-native-image-picker/react-native-image-picker') in this example.
 
-Open Avatar.js and paste the below code to create an avatar for the user. For convenience, we will be using the user's name as the name of the uploaded file and upload the profile picture to the root directory of our app storage. If needed you can create different buckets for each user or a generic bucket to store all provide photos of users. The Altogic Client Library has all the methods to manage buckets and files.
+Open `Avatar.js` and paste the below code to create an avatar for the user. For convenience, we will be using the user's name as the uploaded file's name and uploading the profile picture to the root directory of our app storage. If needed, you can create different buckets for each user or a generic bucket to store all provided photos of users. The Altogic Client Library has all the methods to manage buckets and files.
 
 ```javascript
 // src/components/Avatar.js
