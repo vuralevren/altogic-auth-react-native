@@ -8,20 +8,16 @@ import { useAuthContext } from '../contexts/Auth.context';
 function SignUpView({ navigation }) {
   const { setAuth, setSession } = useAuthContext();
 
-  const [inpName, setInpName] = useState('');
-  const [inpEmail, setInpEmail] = useState('');
-  const [inpPassword, setInpPassword] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [success, setSuccess] = useState('');
   const [error, setError] = useState(null);
 
   const handleSignUp = async () => {
     try {
-      const { user, session, errors } = await altogic.auth.signUpWithEmail(
-        inpEmail,
-        inpPassword,
-        inpName
-      );
+      const { user, session, errors } = await altogic.auth.signUpWithEmail(email, password, name);
 
       if (errors) {
         throw errors;
@@ -32,7 +28,7 @@ function SignUpView({ navigation }) {
         setSession(session);
         navigation.navigate('Profile');
       } else {
-        setSuccess(`We sent a verification link to ${inpEmail}`);
+        setSuccess(`We sent a verification link to ${email}`);
         setError(null);
       }
     } catch (err) {
@@ -47,16 +43,16 @@ function SignUpView({ navigation }) {
         placeholder="Name"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpName(val)}
-        value={inpName}
+        onChangeText={(val) => setName(val)}
+        value={name}
       />
       <TextInput
         style={styles.input}
         placeholder="Email"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpEmail(val)}
-        value={inpEmail}
+        onChangeText={(val) => setEmail(val)}
+        value={email}
       />
       <TextInput
         style={styles.input}
@@ -64,8 +60,8 @@ function SignUpView({ navigation }) {
         secureTextEntry={true}
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpPassword(val)}
-        value={inpPassword}
+        onChangeText={(val) => setPassword(val)}
+        value={password}
       />
       <Button title="Sign Up" onPress={handleSignUp} />
       <Text style={styles.alreadyLabel}>

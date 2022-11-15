@@ -7,14 +7,14 @@ import { useAuthContext } from '../contexts/Auth.context';
 function SignInView({ navigation }) {
   const { setAuth, setSession } = useAuthContext();
 
-  const [inpEmail, setInpEmail] = useState('');
-  const [inpPassword, setInpPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [error, setError] = useState(null);
 
   const handleSignIn = async () => {
     try {
-      const { user, session, errors } = await altogic.auth.signInWithEmail(inpEmail, inpPassword);
+      const { user, session, errors } = await altogic.auth.signInWithEmail(email, password);
 
       if (errors) {
         throw errors;
@@ -35,8 +35,8 @@ function SignInView({ navigation }) {
         placeholder="Email"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpEmail(val)}
-        value={inpEmail}
+        onChangeText={(val) => setEmail(val)}
+        value={email}
       />
       <TextInput
         style={styles.input}
@@ -44,8 +44,8 @@ function SignInView({ navigation }) {
         secureTextEntry={true}
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpPassword(val)}
-        value={inpPassword}
+        onChangeText={(val) => setPassword(val)}
+        value={password}
       />
       <Button title="Login" onPress={handleSignIn} />
       <Text style={styles.alreadyLabel}>Don't have an account yet?</Text>

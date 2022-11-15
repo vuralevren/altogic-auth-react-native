@@ -1,10 +1,9 @@
-# How to Authenticate Email and Password Using React Native & Altogic
-
+# Email & Password Based Authentication Using React Native & Altogic
 
 ## Introduction
 **Altogic** is a Backend as a Service (BaaS) platform and provides a variety of services in modern web and mobile development. Most of the modern applications using React or other libraries/frameworks require to know the identity of a user. And this necessity allows an app to securely save user data and session in the cloud and provide more personalized functionalities and views to users.
 
-Altogic has an Authentication service that integrates and implements well in JAMstack apps. It has a ready-to-use Javascript client library, and it supports many authentication providers such as email/password, phone number, magic link, and OAuth providers like Google, Facebook, Twitter, Github, etc.,
+Altogic has an Authentication service that integrates and implements well in JAMstack apps. It has a ready-to-use Javascript client library, and it supports many authentication providers such as email/password, phone number, magic link, and OAuth providers like Google, Facebook, Twitter, Github, Apple, etc.,
 
 In this tutorial, we will implement email/password authentication with React Native and take a look how as a React Native developer we build applications and integrate with Altogic Authentication.
 
@@ -26,6 +25,8 @@ By default, when you create an app in Altogic, email-based authentication is ena
 ![Authentication Flow](./github/13-auth-flow.png)
 
 If email verification is disabled, then after step 2, Altogic immediately returns a new session to the user, meaning that steps after step #2 in the above flow are not executed. You can easily configure email-based authentication settings from the App Settings > Authentication in Altogic Designer. One critical parameter you need to specify is the Redirect URL, you can also customize this parameter from App Settings > Authentication. Finally, you can also customize the email message template from the App Settings > Authentication > Message Templates.
+
+> For frontend apps that use server-side rendering, the session token needs to be stored in an HTTP cookie so that the client browser and the frontend server can exchange session information. Otherwise, the session information can be lost, and the Altogic Client library methods that require a session token can fail.
 
 ## Prerequisites
 To complete this tutorial, make sure you have installed the following tools and utilities on your local development environment.
@@ -433,14 +434,14 @@ import { useAuthContext } from '../contexts/Auth.context';
 function SignInView({ navigation }) {
   const { setAuth, setSession } = useAuthContext();
 
-  const [inpEmail, setInpEmail] = useState('');
-  const [inpPassword, setInpPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [error, setError] = useState(null);
 
   const handleSignIn = async () => {
     try {
-      const { user, session, errors } = await altogic.auth.signInWithEmail(inpEmail, inpPassword);
+      const { user, session, errors } = await altogic.auth.signInWithEmail(email, password);
 
       if (errors) {
         throw errors;
@@ -461,8 +462,8 @@ function SignInView({ navigation }) {
         placeholder="Email"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpEmail(val)}
-        value={inpEmail}
+        onChangeText={(val) => setEmail(val)}
+        value={email}
       />
       <TextInput
         style={styles.input}
@@ -470,8 +471,8 @@ function SignInView({ navigation }) {
         secureTextEntry={true}
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpPassword(val)}
-        value={inpPassword}
+        onChangeText={(val) => setPassword(val)}
+        value={password}
       />
       <Button title="Login" onPress={handleSignIn} />
       <Text style={styles.alreadyLabel}>Don't have an account yet?</Text>
@@ -521,6 +522,8 @@ We will save the session and user info to state and storage if the `signUpWithEm
 
 If `signUpWithEmail` does not return the user, it means the user must confirm the email so we will show the success message.
 
+> `signUpWithEmail` function can accept optional  third parameter data to save the user's profile. We will save the user's name to the database in this example.
+
 Replacing `views/sign-up.js` with the following code:
 ```javascript
 // src/views/sign-up.js
@@ -533,20 +536,16 @@ import { useAuthContext } from '../contexts/Auth.context';
 function SignUpView({ navigation }) {
   const { setAuth, setSession } = useAuthContext();
 
-  const [inpName, setInpName] = useState('');
-  const [inpEmail, setInpEmail] = useState('');
-  const [inpPassword, setInpPassword] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [success, setSuccess] = useState('');
   const [error, setError] = useState(null);
 
   const handleSignUp = async () => {
     try {
-      const { user, session, errors } = await altogic.auth.signUpWithEmail(
-        inpEmail,
-        inpPassword,
-        inpName
-      );
+      const { user, session, errors } = await altogic.auth.signUpWithEmail(email, password, name);
 
       if (errors) {
         throw errors;
@@ -557,7 +556,7 @@ function SignUpView({ navigation }) {
         setSession(session);
         navigation.navigate('Profile');
       } else {
-        setSuccess(`We sent a verification link to ${inpEmail}`);
+        setSuccess(`We sent a verification link to ${email}`);
         setError(null);
       }
     } catch (err) {
@@ -572,16 +571,16 @@ function SignUpView({ navigation }) {
         placeholder="Name"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpName(val)}
-        value={inpName}
+        onChangeText={(val) => setName(val)}
+        value={name}
       />
       <TextInput
         style={styles.input}
         placeholder="Email"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpEmail(val)}
-        value={inpEmail}
+        onChangeText={(val) => setEmail(val)}
+        value={email}
       />
       <TextInput
         style={styles.input}
@@ -589,8 +588,8 @@ function SignUpView({ navigation }) {
         secureTextEntry={true}
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpPassword(val)}
-        value={inpPassword}
+        onChangeText={(val) => setPassword(val)}
+        value={password}
       />
       <Button title="Sign Up" onPress={handleSignUp} />
       <Text style={styles.alreadyLabel}>
@@ -634,7 +633,6 @@ const styles = StyleSheet.create({
 });
 
 export default SignUpView;
-
 ```
 
 ### Profile Page
@@ -675,9 +673,9 @@ function ProfileView({ navigation }) {
 export default ProfileView;
 ```
 ### Auth Redirect Page
-We use this page to verify the user's email address and **Login With Magic Link Authentication.**
+We use this page to verify the user's email address and process magic link. This is the page where the user is redirected when clicked on the sign-up email confirmation link or the magic link.
 
-We will use Altogic's `altogic.auth.getAuthGrant()` function to log in with the handled token from the URL.
+We will use Altogic's `altogic.auth.getAuthGrant()` function to log in with the handled access_token from the URL and use this access_token to create a new user session and associated `sessionToken`.
 
 Replacing `views/auth-redirect.js` with the following code:
 ```js
@@ -722,7 +720,8 @@ export default AuthRedirectView;
 ### Magic Link Page
 On this page, we will show a form to log in with Magic Link with only email. We will use Altogic's `altogic.auth.sendMagicLinkEmail()` function to log in.
 
-If a user matches the entered email address, this function sends a link to that user by mail. And if the link in the e-mail is clicked, the user is logged in.
+When the user clicks on the magic link in the email, Altogic verifies the validity of the magic link and, if successful, redirects the user to the redirect URL specified in your app authentication settings with an access token in a query string parameter named `access_token.` The magic link flows in a similar way to the sign-up process. We use the `getAuthGrant` method explained above to create a new session and associated `sessionToken`.
+
 ```js
 // src/views/magic-link.js
 import { Link } from '@react-navigation/native';
@@ -731,7 +730,7 @@ import { View, StyleSheet, TextInput, Button, Text } from 'react-native';
 import altogic from '../configs/altogic';
 
 function MagicLinkView() {
-  const [inpEmail, setInpEmail] = useState('');
+  const [email, setEmail] = useState('');
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
@@ -742,12 +741,12 @@ function MagicLinkView() {
       setLoading(true);
       setError(null);
 
-      const { errors: apiErrors } = await altogic.auth.sendMagicLinkEmail(inpEmail);
+      const { errors: apiErrors } = await altogic.auth.sendMagicLinkEmail(email);
       setLoading(false);
 
       if (apiErrors) throw apiErrors;
 
-      setInpEmail('');
+      setEmail('');
       setSuccess('Email sent! Check your inbox.');
     } catch (error) {
       setError(error.items);
@@ -761,8 +760,8 @@ function MagicLinkView() {
         placeholder="Email"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpEmail(val)}
-        value={inpEmail}
+        onChangeText={(val) => setEmail(val)}
+        value={email}
       />
       <Button title="Send Magic Link" disabled={loading} onPress={loginHandler} />
       <Text style={styles.alreadyLabel}>Don't have an account yet?</Text>
@@ -807,7 +806,7 @@ export default MagicLinkView;
 ```
 
 ## Updating User Info
-In this components, we will use Altogic's database operations to update the user fields and managing sessions.
+In this component, we will use Altogic's database operations to update the user fields and managing sessions.
 
 
 Let's create some components in **src/components/** folder as below:
@@ -822,15 +821,15 @@ import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import altogic from '../configs/altogic';
 import { useAuthContext } from '../contexts/Auth.context';
 
-function UserInfo(params) {
+function UserInfo() {
   const { auth, setAuth } = useAuthContext();
   const [changeMode, setChangeMode] = useState(true);
   const [errors, setErrors] = useState(null);
 
-  const [inpName, setInpName] = useState(auth.name);
+  const [name, setName] = useState(auth.name);
 
   const handleNameChange = () => {
-    if (!changeMode && auth.name !== inpName) {
+    if (!changeMode && auth.name !== name) {
       changeName();
     }
     setChangeMode(!changeMode);
@@ -841,7 +840,7 @@ function UserInfo(params) {
     const { data: updatedUser, errors: apiErrors } = await altogic.db
       .model('users')
       .object(auth._id)
-      .update({ name: inpName });
+      .update({ name });
     if (apiErrors) setErrors(apiErrors.items[0].message);
     else setAuth(updatedUser);
   };
@@ -852,7 +851,7 @@ function UserInfo(params) {
         {changeMode ? (
           <Text style={styles.text}>Hello, {auth?.name}</Text>
         ) : (
-          <TextInput type="text" style={styles.input} onChangeText={setInpName} value={inpName} />
+          <TextInput type="text" style={styles.input} onChangeText={setName} value={name} />
         )}
         <Button title={changeMode ? 'Change name' : 'Update name'} onPress={handleNameChange} />
       </View>
@@ -985,7 +984,7 @@ Let's create a Avatar component for user can upload a profile photo.
 
 > You will need a file picker that works on the environment you build the project for, we will use [react-native-image-picker]('https://github.com/react-native-image-picker/react-native-image-picker') in this example.
 
-Open `Avatar.js` and paste the below code to create an avatar for the user. For convenience, we will be using the user's name as the uploaded file's name and uploading the profile picture to the root directory of our app storage. If needed, you can create different buckets for each user or a generic bucket to store all provided photos of users. The Altogic Client Library has all the methods to manage buckets and files.
+Open `Avatar.js` and paste the below code to create an avatar for the user. For convenience, we will be using the user's `_id` as the uploaded file's name and uploading the profile picture to the root directory of our app storage. If needed, you can create different buckets for each user or a generic bucket to store all provided photos of users. The Altogic Client Library has all the methods to manage buckets and files.
 
 ```javascript
 // src/components/Avatar.js
@@ -1024,7 +1023,7 @@ function Avatar() {
 
       setLoading(true);
 
-      const { publicPath } = await uploadPhoto(formData, auth.email);
+      const { publicPath } = await uploadPhoto(formData, `user_${auth._id}`);
       await updateUserInfo({ profilePicture: publicPath });
       setLoading(false);
     } catch (error) {

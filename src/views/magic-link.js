@@ -4,7 +4,7 @@ import { View, StyleSheet, TextInput, Button, Text } from 'react-native';
 import altogic from '../configs/altogic';
 
 function MagicLinkView() {
-  const [inpEmail, setInpEmail] = useState('');
+  const [email, setEmail] = useState('');
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
@@ -15,12 +15,12 @@ function MagicLinkView() {
       setLoading(true);
       setError(null);
 
-      const { errors: apiErrors } = await altogic.auth.sendMagicLinkEmail(inpEmail);
+      const { errors: apiErrors } = await altogic.auth.sendMagicLinkEmail(email);
       setLoading(false);
 
       if (apiErrors) throw apiErrors;
 
-      setInpEmail('');
+      setEmail('');
       setSuccess('Email sent! Check your inbox.');
     } catch (error) {
       setError(error.items);
@@ -34,8 +34,8 @@ function MagicLinkView() {
         placeholder="Email"
         autoCapitalize="none"
         placeholderTextColor="white"
-        onChangeText={(val) => setInpEmail(val)}
-        value={inpEmail}
+        onChangeText={(val) => setEmail(val)}
+        value={email}
       />
       <Button title="Send Magic Link" disabled={loading} onPress={loginHandler} />
       <Text style={styles.alreadyLabel}>Don't have an account yet?</Text>

@@ -33,7 +33,7 @@ function Avatar() {
 
       setLoading(true);
 
-      const { publicPath } = await uploadPhoto(formData, auth.email);
+      const { publicPath } = await uploadPhoto(formData, `user_${auth._id}`);
       await updateUserInfo({ profilePicture: publicPath });
       setLoading(false);
     } catch (error) {

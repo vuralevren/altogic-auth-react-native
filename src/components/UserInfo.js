@@ -3,15 +3,15 @@ import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import altogic from '../configs/altogic';
 import { useAuthContext } from '../contexts/Auth.context';
 
-function UserInfo(params) {
+function UserInfo() {
   const { auth, setAuth } = useAuthContext();
   const [changeMode, setChangeMode] = useState(true);
   const [errors, setErrors] = useState(null);
 
-  const [inpName, setInpName] = useState(auth.name);
+  const [name, setName] = useState(auth.name);
 
   const handleNameChange = () => {
-    if (!changeMode && auth.name !== inpName) {
+    if (!changeMode && auth.name !== name) {
       changeName();
     }
     setChangeMode(!changeMode);
@@ -22,7 +22,7 @@ function UserInfo(params) {
     const { data: updatedUser, errors: apiErrors } = await altogic.db
       .model('users')
       .object(auth._id)
-      .update({ name: inpName });
+      .update({ name });
     if (apiErrors) setErrors(apiErrors.items[0].message);
     else setAuth(updatedUser);
   };
@@ -33,7 +33,7 @@ function UserInfo(params) {
         {changeMode ? (
           <Text style={styles.text}>Hello, {auth?.name}</Text>
         ) : (
-          <TextInput type="text" style={styles.input} onChangeText={setInpName} value={inpName} />
+          <TextInput type="text" style={styles.input} onChangeText={setName} value={name} />
         )}
         <Button title={changeMode ? 'Change name' : 'Update name'} onPress={handleNameChange} />
       </View>
